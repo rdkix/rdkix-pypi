@@ -11,23 +11,23 @@ from textwrap import dedent
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext as build_ext_orig
 
-# RDKit version to build (tag from github repository)
-rdkit_tag = "Release_2024_03_6"
+# RDKix version to build (tag from github repository)
+rdkix_tag = "Release_2024_03_6"
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 
-class RDKit(Extension):
+class RDKix(Extension):
     def __init__(self, name, **kwargs):
         super().__init__(name, sources=[])
         self.__dict__.update(kwargs)
 
 
-class BuildRDKit(build_ext_orig):
+class BuildRDKix(build_ext_orig):
     def run(self):
         for ext in self.extensions:
-            self.build_rdkit(ext)
+            self.build_rdkix(ext)
         super().run()
 
     def get_ext_filename(self, ext_name):
@@ -116,13 +116,13 @@ freetype/2.13.2
 
         check_call(cmd)
 
-    def build_rdkit(self, ext):
-        """Build RDKit
+    def build_rdkix(self, ext):
+        """Build RDKix
 
         Steps:
         (1) Use Conan to install boost and other libraries
-        (2) Build RDKit
-        (3) Copy RDKit and additional files to the wheel path
+        (2) Build RDKix
+        (3) Copy RDKix and additional files to the wheel path
         (4) Copy the libraries to system paths
         """
 
@@ -136,25 +136,25 @@ freetype/2.13.2
         boost_lib_version = "_".join(boost_version.split(".")[:2])
         self.conan_install(boost_version, conan_toolchain_path)
 
-        # Build RDkit
+        # Build RDkix
         # Define paths
         build_path = Path(self.build_temp).absolute()
         build_path.mkdir(parents=True, exist_ok=True)
         os.chdir(str(build_path))
 
-        rdkit_install_path = build_path / "rdkit_install"
-        rdkit_install_path.mkdir(parents=True, exist_ok=True)
+        rdkix_install_path = build_path / "rdkix_install"
+        rdkix_install_path.mkdir(parents=True, exist_ok=True)
 
-        # Clone RDKit from git at rdkit_tag
+        # Clone RDKix from git at rdkix_tag
         check_call(
-            ["git", "clone", "-b", f"{ext.rdkit_tag}", "https://github.com/rdkit/rdkit"]
+            ["git", "clone", "-b", f"{ext.rdkix_tag}", "https://github.com/rdkix/rdkix"]
         )
 
         # Location of license file
-        license_file = build_path / "rdkit" / "license.txt"
+        license_file = build_path / "rdkix" / "license.txt"
 
         # Start build process
-        os.chdir(str("rdkit"))
+        os.chdir(str("rdkix"))
 
        
         import fileinput
@@ -166,29 +166,29 @@ freetype/2.13.2
                         line = line.replace(search_exp, replace_exp)
                     print(line, end="")
 
-        # Fix a bug in conan or rdkit: target name for numpy is boost::numpy{pyversion} with small 'b'
+        # Fix a bug in conan or rdkix: target name for numpy is boost::numpy{pyversion} with small 'b'
         # and not Boost::numpy{pyversion}
         # Line 312 in 2024_03_06 in CMakeLists.txt
-        # NEW: target_link_libraries(rdkit_py_base INTERFACE "Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
+        # NEW: target_link_libraries(rdkix_py_base INTERFACE "Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
         replace_all(
             "CMakeLists.txt",
-            'target_link_libraries(rdkit_py_base INTERFACE "Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")',
-            'target_link_libraries(rdkit_py_base INTERFACE "boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")',
+            'target_link_libraries(rdkix_py_base INTERFACE "Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")',
+            'target_link_libraries(rdkix_py_base INTERFACE "boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")',
         )
 
         # on windows, cmake is not configured to detect the python*.lib dynamic library
         # 
         # replace_all(
         #     "CMakeLists.txt",
-        #     'target_link_libraries(rdkit_py_base INTERFACE ${Python3_LIBRARIES} )',
-        #     'message("HERE")\n message(${Python3_LIBRARIES})\n target_link_libraries(rdkit_py_base INTERFACE ${Python3_LIBRARIES} )',
+        #     'target_link_libraries(rdkix_py_base INTERFACE ${Python3_LIBRARIES} )',
+        #     'message("HERE")\n message(${Python3_LIBRARIES})\n target_link_libraries(rdkix_py_base INTERFACE ${Python3_LIBRARIES} )',
         # )
 
         # on windows; bug in 2024_03_6
         replace_all(
             "CMakeLists.txt",
-            'target_link_libraries(rdkit_py_base INTERFACE ${Python3_LIBRARY} )',
-            'target_link_libraries(rdkit_py_base INTERFACE ${Python3_LIBRARIES} )',
+            'target_link_libraries(rdkix_py_base INTERFACE ${Python3_LIBRARY} )',
+            'target_link_libraries(rdkix_py_base INTERFACE ${Python3_LIBRARIES} )',
         )
         
         if "macosx" in os.environ["CIBW_BUILD"]:
@@ -220,11 +220,11 @@ freetype/2.13.2
             # For the toolchain file this needs to be set
             f"-DCMAKE_POLICY_DEFAULT_CMP0091=NEW",
             # Boost_VERSION_STRING is set but Boost_LIB_VERSION is not set by conan.
-            # Boost_LIB_VERSION is required by RDKit => Set manually
+            # Boost_LIB_VERSION is required by RDKix => Set manually
             f"-DBoost_LIB_VERSION={boost_lib_version}",
             # Select correct python 3 version
             f"-DPython3_ROOT_DIR={Path(sys.prefix)}",
-            # RDKit build flags
+            # RDKix build flags
             "-DRDK_BUILD_INCHI_SUPPORT=ON",
             "-DRDK_BUILD_AVALON_SUPPORT=ON",
             "-DRDK_BUILD_PYTHON_WRAPPERS=ON",
@@ -236,7 +236,7 @@ freetype/2.13.2
             # Disable system libs for finding boost
             "-DBoost_NO_SYSTEM_PATHS=ON",
             # build stuff
-            f"-DCMAKE_INSTALL_PREFIX={rdkit_install_path}",
+            f"-DCMAKE_INSTALL_PREFIX={rdkix_install_path}",
             "-DCMAKE_BUILD_TYPE=Release",
             # Speed up builds
             "-DRDK_BUILD_CPP_TESTS=OFF",
@@ -254,7 +254,7 @@ freetype/2.13.2
                 return str(pt).replace("\\", "/")
         
             options += [
-                # DRDK_INSTALL_STATIC_LIBS should be fixed in newer RDKit builds. Remove?
+                # DRDK_INSTALL_STATIC_LIBS should be fixed in newer RDKix builds. Remove?
                 "-DRDK_INSTALL_STATIC_LIBS=OFF",
                 "-DRDK_INSTALL_DLLS_MSVC=ON",
             ]
@@ -279,7 +279,7 @@ freetype/2.13.2
         if "macosx_x86_64" in os.environ["CIBW_BUILD"]:
             options += [
                 # macOS < 10.13 has a incomplete C++17 implementation
-                # See https://github.com/kuelumbus/rdkit-pypi/pull/85 for a discussion
+                # See https://github.com/kuelumbus/rdkix/pull/85 for a discussion
                 f"-DCMAKE_OSX_DEPLOYMENT_TARGET={os.environ.get('MACOSX_DEPLOYMENT_TARGET', '10.13')}",
             ]
 
@@ -314,19 +314,19 @@ freetype/2.13.2
                 "cmake --install build",
             ]
 
-        # Define the rdkit_files path
+        # Define the rdkix_files path
         py_name = "python" + ".".join(map(str, sys.version_info[:2]))
 
-        path_site_packages = rdkit_install_path / "lib" / py_name / "site-packages"
+        path_site_packages = rdkix_install_path / "lib" / py_name / "site-packages"
         if sys.platform == "win32":
-            path_site_packages = rdkit_install_path / "Lib" / "site-packages"
+            path_site_packages = rdkix_install_path / "Lib" / "site-packages"
 
-        print("!!! --- CMAKE build command and variables for RDKit", file=sys.stderr)
+        print("!!! --- CMAKE build command and variables for RDKix", file=sys.stderr)
         print(cmds, file=sys.stderr)
         variables = {}
         print(variables, file=sys.stderr)
 
-        # Run CMake and install RDKit
+        # Run CMake and install RDKix
         [
             check_call(
                 shlex.split(c, posix="win32" not in sys.platform),
@@ -338,7 +338,7 @@ freetype/2.13.2
         # --- Copy libs to system path
         # While repairing the wheels, the built libs need to be copied to the platform wheels
         # Also, the libs needs to be accessible for building the stubs
-        rdkit_lib_path = rdkit_install_path / "lib"
+        rdkix_lib_path = rdkix_install_path / "lib"
         boost_lib_path = conan_toolchain_path / "boost" / "lib"
         boost_lib_path_bin_windows_only = conan_toolchain_path / "boost" / "bin"
 
@@ -346,7 +346,7 @@ freetype/2.13.2
         if "linux" in sys.platform:
             # Libs end with .so
             to_path = Path("/usr/local/lib")
-            [copy_file(i, str(to_path)) for i in rdkit_lib_path.rglob("*.so*")]
+            [copy_file(i, str(to_path)) for i in rdkix_lib_path.rglob("*.so*")]
             [copy_file(i, str(to_path)) for i in boost_lib_path.rglob("*.so*")]
             cmds.append("ldconfig")
 
@@ -358,9 +358,9 @@ freetype/2.13.2
             for pt in dll_paths:
                 to_path = Path(pt)
                 to_path.mkdir(parents=True, exist_ok=True)
-                [copy_file(i, str(to_path)) for i in rdkit_lib_path.rglob("*.dll")]
-                [copy_file(i, str(to_path)) for i in rdkit_lib_path.rglob("*.pyd")]
-                [copy_file(i, str(to_path)) for i in rdkit_lib_path.rglob("*.lib")]
+                [copy_file(i, str(to_path)) for i in rdkix_lib_path.rglob("*.dll")]
+                [copy_file(i, str(to_path)) for i in rdkix_lib_path.rglob("*.pyd")]
+                [copy_file(i, str(to_path)) for i in rdkix_lib_path.rglob("*.lib")]
 
                 [copy_file(i, str(to_path)) for i in boost_lib_path.rglob("*.lib")]
                 [
@@ -386,16 +386,16 @@ freetype/2.13.2
             # Add path to DYLD_LIBRARY_PATH for generating stubs
             variables["DYLD_LIBRARY_PATH"] = str(to_path)
 
-            # copy all boost and rdkit libs to one path
-            [copy_file(i, str(to_path)) for i in rdkit_lib_path.rglob("*dylib")]
+            # copy all boost and rdkix libs to one path
+            [copy_file(i, str(to_path)) for i in rdkix_lib_path.rglob("*dylib")]
             [copy_file(i, str(to_path)) for i in boost_lib_path.rglob("*dylib")]
 
-        # Build the RDKit stubs
+        # Build the RDKix stubs
         cmds += [
             f"cmake --build build --config Release --target stubs -v",
         ]
 
-        # rdkit-stubs require the site-package path to be in sys.path / PYTHONPATH
+        # rdkix-stubs require the site-package path to be in sys.path / PYTHONPATH
         variables["PYTHONPATH"] = (
             os.environ.get("PYTHONPATH", "") + os.pathsep + str(path_site_packages)
         )
@@ -415,16 +415,16 @@ freetype/2.13.2
             for c in cmds
         ]
 
-        # Print the stubs error file to rdkit-stubs/gen_rdkit_stubs.err
+        # Print the stubs error file to rdkix-stubs/gen_rdkix_stubs.err
         stubs_error_file = (
-            build_path / "rdkit" / "build" / "rdkit-stubs" / "gen_rdkit_stubs.err"
+            build_path / "rdkix" / "build" / "rdkix-stubs" / "gen_rdkix_stubs.err"
         )
         with open(stubs_error_file, "r") as fin:
             print(fin.read(), file=sys.stderr)
 
         os.chdir(str(cwd))
 
-        # Copy RDKit and additional files to the wheel path
+        # Copy RDKix and additional files to the wheel path
         # Modify RDPaths.py
         sed = "gsed" if sys.platform == "darwin" else "sed"
         call(
@@ -432,65 +432,65 @@ freetype/2.13.2
                 sed,
                 "-i",
                 "/_share =/c\_share = os.path.dirname(__file__)",  # noqa: W605
-                f"{path_site_packages / 'rdkit'/ 'RDPaths.py'}",
+                f"{path_site_packages / 'rdkix'/ 'RDPaths.py'}",
             ]
         )
 
-        # RDKit stubs directory
-        dir_rdkit_stubs = path_site_packages / "rdkit-stubs"
+        # RDKix stubs directory
+        dir_rdkix_stubs = path_site_packages / "rdkix-stubs"
 
         # Data directory
-        rdkit_data_path = rdkit_install_path / "share" / "RDKit" / "Data"
+        rdkix_data_path = rdkix_install_path / "share" / "RDKix" / "Data"
 
         # Contrib directory
-        rdkit_contrib_path = rdkit_install_path / "share" / "RDKit" / "Contrib"
+        rdkix_contrib_path = rdkix_install_path / "share" / "RDKix" / "Contrib"
 
         # Setuptools searches at this path for files to include
         wheel_path = Path(self.get_ext_fullpath(ext.name)).absolute().parent
         wheel_path.mkdir(exist_ok=True)
 
-        # Copy RDMKit files to .../rdkit directory
+        # Copy RDMKit files to .../rdkix directory
         def _logpath(path, names):
             ignore_patterns
             print(f"In directory {path} copy files: {names}", file=sys.stderr)
             return ignore_patterns("*.pyc")(path, names)
 
-        # Copy the RDKit stubs files to the rdkit-stubs wheels path
-        copytree(dir_rdkit_stubs, wheel_path / "rdkit-stubs", ignore=_logpath)
+        # Copy the RDKix stubs files to the rdkix-stubs wheels path
+        copytree(dir_rdkix_stubs, wheel_path / "rdkix-stubs", ignore=_logpath)
         # Copy the Python files
-        copytree(path_site_packages / "rdkit", wheel_path / "rdkit", ignore=_logpath)
+        copytree(path_site_packages / "rdkix", wheel_path / "rdkix", ignore=_logpath)
         # Copy the data directory
-        copytree(rdkit_data_path, wheel_path / "rdkit" / "Data", ignore=_logpath)
+        copytree(rdkix_data_path, wheel_path / "rdkix" / "Data", ignore=_logpath)
         # Copy the contrib directory
-        copytree(rdkit_contrib_path, wheel_path / "rdkit" / "Contrib", ignore=_logpath)
+        copytree(rdkix_contrib_path, wheel_path / "rdkix" / "Contrib", ignore=_logpath)
 
         # Delete some large files from the Contrib folder
-        # that are not necessary for running RDKit
+        # that are not necessary for running RDKix
         # See https://github.com/rdkit/rdkit/issues/5601
-        _dir = wheel_path / "rdkit" / "Contrib" / "NIBRSubstructureFilters"
+        _dir = wheel_path / "rdkix" / "Contrib" / "NIBRSubstructureFilters"
         rmtree(str(_dir / "examples"))
         (_dir / "FilterSet_NIBR2019_wPubChemExamples.html").unlink()
         (_dir / "filterExamples.png").unlink()
 
-        _dir = wheel_path / "rdkit" / "Contrib" / "CalcLigRMSD"
+        _dir = wheel_path / "rdkix" / "Contrib" / "CalcLigRMSD"
         rmtree(str(_dir / "data"))
         rmtree(str(_dir / "figures"))
         (_dir / "Examples_CalcLigRMSD.ipynb").unlink()
 
         # Copy the license
-        copy_file(str(license_file), str(wheel_path / "rdkit"))
+        copy_file(str(license_file), str(wheel_path / "rdkix"))
 
 
 setup(
-    name="rdkit",
-    version=rdkit_tag.replace("Release_", "").replace("_", "."),
+    name="rdkix",
+    version=rdkix_tag.replace("Release_", "").replace("_", "."),
     description="A collection of chemoinformatics and machine-learning software written in C++ and Python",
     author="Christopher Kuenneth",
     author_email="chris@kuenneth.dev",
-    url="https://github.com/kuelumbus/rdkit-pypi",
+    url="https://github.com/kuelumbus/rdkix",
     project_urls={
-        "RDKit": "http://rdkit.org/",
-        "RDKit on Github": "https://github.com/rdkit/rdkit",
+        "RDKix": "http://rdkit.org/",
+        "RDKix on Github": "https://github.com/rdkix/rdkix",
     },
     license="BSD-3-Clause",
     long_description=long_description,
@@ -500,7 +500,7 @@ setup(
         "Pillow",
     ],
     ext_modules=[
-        RDKit("rdkit", rdkit_tag=rdkit_tag),
+        RDKix("rdkix", rdkix_tag=rdkix_tag),
     ],
-    cmdclass=dict(build_ext=BuildRDKit),
+    cmdclass=dict(build_ext=BuildRDKix),
 )
