@@ -1,7 +1,7 @@
 import pytest
 
 def test_descriptor():
-    from rdkit.Chem import Descriptors
+    from rdkix.Chem import Descriptors
     # Was 209 but changed to 211 in Release_2023_09_1
     # Is 210 from Release_2023_09_3
     # Is 217 from Release_2024_09_4
@@ -9,9 +9,9 @@ def test_descriptor():
 
 
 def test_3d_descriptors():
-    # from https://github.com/rdkit/rdkit/blob/master/rdkit/Chem/UnitTestDescriptors.py
-    from rdkit import Chem
-    from rdkit.Chem import AllChem, Descriptors3D
+    # from https://github.com/rdkix/rdkix/blob/master/rdkix/Chem/UnitTestDescriptors.py
+    from rdkix import Chem
+    from rdkix.Chem import AllChem, Descriptors3D
 
     mol = Chem.MolFromSmiles('CCCO')
     
@@ -28,8 +28,8 @@ def test_data_dir_and_chemical_features():
     """
     import os
 
-    from rdkit import Chem, RDConfig
-    from rdkit.Chem import ChemicalFeatures
+    from rdkix import Chem, RDConfig
+    from rdkix.Chem import ChemicalFeatures
 
     fdefName = os.path.join(RDConfig.RDDataDir, "BaseFeatures.fdef")
     factory = ChemicalFeatures.BuildFeatureFactory(fdefName)
@@ -38,6 +38,6 @@ def test_data_dir_and_chemical_features():
     assert len(feats) == 8
 
 
-def test_rdkit_chem_draw_import():
+def test_rdkix_chem_draw_import():
     # This segfaults if the compiled cairo version from centos is used
-    from rdkit.Chem.Draw import ReactionToImage  # noqa: F401
+    from rdkix.Chem.Draw import ReactionToImage  # noqa: F401
