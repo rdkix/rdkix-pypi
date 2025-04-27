@@ -27,7 +27,6 @@ jobs:
       - id: set-matrix
         run: |
           FILTER="${{ github.event.inputs.build_matrix_filter }}"
-          FILTER_JSON=""
           
           # Define the full matrix
           FULL_MATRIX='{
@@ -66,9 +65,10 @@ jobs:
             ]
           }'
           
-          # If it's a PR or empty filter, use the full matrix
+          # If it's a PR or empty filter, use the full matrix but process it the same way
           if [ "${{ github.event_name }}" != "workflow_dispatch" ] || [ -z "$FILTER" ]; then
-            FILTER_JSON="$FULL_MATRIX"
+            # Use all entries
+            FILTERED_INCLUDES=$(echo "$FULL_MATRIX" | jq -c '.include')
           else
             # Filter the matrix based on the input
             FILTERED_INCLUDES="["
@@ -97,10 +97,11 @@ jobs:
             done
             
             FILTERED_INCLUDES="$FILTERED_INCLUDES]"
-            FILTER_JSON="{\"include\":$FILTERED_INCLUDES}"
           fi
           
-          echo "matrix=$FILTER_JSON" >> $GITHUB_OUTPUT
+          # Properly format and escape the JSON output
+          MATRIX_JSON="{\"include\":$(echo "$FILTERED_INCLUDES" | jq -c)}"
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
   build_wheels:
     name: Build for cp${{ matrix.python }}-${{ matrix.platform_id }}
