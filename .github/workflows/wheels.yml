@@ -1,8 +1,12 @@
-
 name: Build wheels
 
 on:
   workflow_dispatch:
+    inputs:
+      build_matrix_filter:
+        description: 'Filter for builds (e.g. py37, macosx_arm64, macosx_arm64_py37)'
+        required: false
+        default: ''
   pull_request:
   
 
@@ -152,6 +156,12 @@ jobs:
             python: 313
             platform_id: macosx_x86_64
 
+    if: >
+      github.event_name != 'workflow_dispatch' || 
+      github.event.inputs.build_matrix_filter == '' || 
+      contains(format(',{0},', github.event.inputs.build_matrix_filter), format(',py{0},', matrix.python)) || 
+      contains(format(',{0},', github.event.inputs.build_matrix_filter), format(',{0},', matrix.platform_id)) || 
+      contains(format(',{0},', github.event.inputs.build_matrix_filter), format(',{0}_py{1},', matrix.platform_id, matrix.python))
     steps:
       - uses: actions/checkout@v4
 
