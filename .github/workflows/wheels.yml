@@ -3,8 +3,6 @@ name: Build wheels
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
   pull_request:
   
 
@@ -26,6 +24,10 @@ jobs:
       matrix:
         include:
           # Window 64 bit
+          - os: windows-2019
+            python: 37
+            bitness: 64
+            platform_id: win_amd64
           - os: windows-2019
             python: 38
             bitness: 64
@@ -53,37 +55,52 @@ jobs:
 
           # Linux 64 bit Intel: x86_64
           - os: ubuntu-latest
+            python: 37
+            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-latest
             python: 38
             bitness: 64
             platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 39
             bitness: 64
             platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 310
             bitness: 64
             platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 311
             bitness: 64
             platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 312
             bitness: 64
             platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 313
             bitness: 64
             platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
 
           # Linux 64 bit ARM: aarch64 (on Circle CI)
 
           # MacOS 64 bit Intel: arm64
-          - os: ubuntu-latest
-            python: 38
+          - os: macos-14
             bitness: 64
-            platform_id: manylinux_x86_64
+            python: 37
+            platform_id: macosx_arm64
+          - os: macos-14
+            bitness: 64
+            python: 38
+            platform_id: macosx_arm64
           - os: macos-14
             bitness: 64
             python: 39
@@ -106,6 +123,10 @@ jobs:
             platform_id: macosx_arm64
 
           # MacOS 64 bit Intel: x86_64
+          - os: macos-13
+            bitness: 64
+            python: 37
+            platform_id: macosx_x86_64
           - os: macos-13
             bitness: 64
             python: 38
@@ -168,6 +189,8 @@ jobs:
       - name: Build wheels
         env:
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
+          CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
 
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
