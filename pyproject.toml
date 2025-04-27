@@ -26,7 +26,7 @@ before-all = [
     "sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/CentOS-*.repo",
     "sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/CentOS-*.repo",
     "yum update -y",
-    "yum install freetype-devel libpng-devel pixman-devel zlib-devel eigen3-devel -y",
+    "yum install freetype-devel libpng-devel pixman-devel zlib-devel eigen3-devel wget -y",
     # cairo-devel from the centos repo does not work, build here
     "wget https://www.cairographics.org/snapshots/cairo-1.15.14.tar.xz --no-check-certificate",
     "tar xvf cairo-*",
