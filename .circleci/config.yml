@@ -1,5 +1,11 @@
 version: 2.1
 
+parameters:
+  python-target:
+    type: string
+    default: "all"
+    description: "指定Python版本 (py38, py39, py310, py311, py312, py313或all)"
+
 jobs:
   linux-arm64-wheels:
     working_directory: ~/linux-wheels
@@ -49,13 +55,21 @@ jobs:
 
 workflows:
   all-tests:
+    when: << pipeline.parameters.python-target >> != ""
     jobs:
       - linux-arm64-wheels:
           matrix:
             parameters:
-              python-version: ["38", "39", "310", "311", "312", "313"]
+              python-version: ["37", "38", "39", "310", "311", "312", "313"]
+          filters:
+            branches:
+              only:
+                - never-trigger-on-branch-push
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.python-target >> ]
+              - equal: [ "py<< matrix.python-version >>", << pipeline.parameters.python-target >> ]
       # - osx-wheels:
       #     matrix:
       #       parameters:
-      #         python-version: ["38", "39", "310", "311", "312"]
-
+      #         python-version: ["37", "38", "39", "310", "311", "312", "313"]
