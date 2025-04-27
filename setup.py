@@ -301,14 +301,15 @@ class BuildRDKix(build_ext_orig):
 
 
 setup(
-    name="rdkix",
+    name="rdkit-mux",
     version=rdkix_tag.replace("Release_", "").replace("_", "."),
-    description="A collection of chemoinformatics and machine-learning software written in C++ and Python",
-    author="Christopher Kuenneth",
-    author_email="chris@kuenneth.dev",
-    url="https://github.com/kuelumbus/rdkix",
+    description="An unofficial renamed fork of RDKit library for multiple RDKit versions in single environment.",
+    author="Jack Zhou",
+    author_email="jackzzs@outlook.com",
+    url="https://github.com/rdkix/rdkix-pypi",
     project_urls={
-        "RDKix": "http://rdkit.org/",
+        "RDKit": "http://rdkit.org/",
+        "RDKit on Github": "https://github.com/rdkit/rdkit",
         "RDKix on Github": "https://github.com/rdkix/rdkix",
     },
     license="BSD-3-Clause",
@@ -320,7 +321,7 @@ setup(
         "Pillow",
     ],
     ext_modules=[
-        RDKix("rdkix", rdkix_tag=rdkix_tag),
+        RDKix("rdkit-mux", rdkix_tag=rdkix_tag),
     ],
     cmdclass=dict(build_ext=BuildRDKix),
 )
