@@ -18,150 +18,98 @@ env:
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   PYTHONUNBUFFERED: "1"
 
-
 jobs:
+  setup_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          FILTER="${{ github.event.inputs.build_matrix_filter }}"
+          FILTER_JSON=""
+          
+          # Define the full matrix
+          FULL_MATRIX='{
+            "include": [
+              {"os": "windows-2019", "python": "37", "bitness": 64, "platform_id": "win_amd64"},
+              {"os": "windows-2019", "python": "38", "bitness": 64, "platform_id": "win_amd64"},
+              {"os": "windows-2019", "python": "39", "bitness": 64, "platform_id": "win_amd64"},
+              {"os": "windows-2019", "python": "310", "bitness": 64, "platform_id": "win_amd64"},
+              {"os": "windows-2019", "python": "311", "bitness": 64, "platform_id": "win_amd64"},
+              {"os": "windows-2019", "python": "312", "bitness": 64, "platform_id": "win_amd64"},
+              {"os": "windows-2019", "python": "313", "bitness": 64, "platform_id": "win_amd64"},
+              
+              {"os": "ubuntu-latest", "python": "37", "bitness": 64, "platform_id": "manylinux_x86_64", "manylinux_image": "manylinux2014"},
+              {"os": "ubuntu-latest", "python": "38", "bitness": 64, "platform_id": "manylinux_x86_64", "manylinux_image": "manylinux2014"},
+              {"os": "ubuntu-latest", "python": "39", "bitness": 64, "platform_id": "manylinux_x86_64", "manylinux_image": "manylinux2014"},
+              {"os": "ubuntu-latest", "python": "310", "bitness": 64, "platform_id": "manylinux_x86_64", "manylinux_image": "manylinux2014"},
+              {"os": "ubuntu-latest", "python": "311", "bitness": 64, "platform_id": "manylinux_x86_64", "manylinux_image": "manylinux2014"},
+              {"os": "ubuntu-latest", "python": "312", "bitness": 64, "platform_id": "manylinux_x86_64", "manylinux_image": "manylinux2014"},
+              {"os": "ubuntu-latest", "python": "313", "bitness": 64, "platform_id": "manylinux_x86_64", "manylinux_image": "manylinux2014"},
+              
+              {"os": "macos-14", "python": "37", "bitness": 64, "platform_id": "macosx_arm64"},
+              {"os": "macos-14", "python": "38", "bitness": 64, "platform_id": "macosx_arm64"},
+              {"os": "macos-14", "python": "39", "bitness": 64, "platform_id": "macosx_arm64"},
+              {"os": "macos-14", "python": "310", "bitness": 64, "platform_id": "macosx_arm64"},
+              {"os": "macos-14", "python": "311", "bitness": 64, "platform_id": "macosx_arm64"},
+              {"os": "macos-14", "python": "312", "bitness": 64, "platform_id": "macosx_arm64"},
+              {"os": "macos-14", "python": "313", "bitness": 64, "platform_id": "macosx_arm64"},
+              
+              {"os": "macos-13", "python": "37", "bitness": 64, "platform_id": "macosx_x86_64"},
+              {"os": "macos-13", "python": "38", "bitness": 64, "platform_id": "macosx_x86_64"},
+              {"os": "macos-13", "python": "39", "bitness": 64, "platform_id": "macosx_x86_64"},
+              {"os": "macos-13", "python": "310", "bitness": 64, "platform_id": "macosx_x86_64"},
+              {"os": "macos-13", "python": "311", "bitness": 64, "platform_id": "macosx_x86_64"},
+              {"os": "macos-13", "python": "312", "bitness": 64, "platform_id": "macosx_x86_64"},
+              {"os": "macos-13", "python": "313", "bitness": 64, "platform_id": "macosx_x86_64"}
+            ]
+          }'
+          
+          # If it's a PR or empty filter, use the full matrix
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ] || [ -z "$FILTER" ]; then
+            FILTER_JSON="$FULL_MATRIX"
+          else
+            # Filter the matrix based on the input
+            FILTERED_INCLUDES="["
+            FILTER_PARTS=$(echo ",$FILTER," | tr ',' '\n')
+            
+            for row in $(echo "$FULL_MATRIX" | jq -c '.include[]'); do
+              PYTHON=$(echo "$row" | jq -r '.python')
+              PLATFORM=$(echo "$row" | jq -r '.platform_id')
+              
+              SHOULD_INCLUDE=false
+              for part in $FILTER_PARTS; do
+                if [ -n "$part" ]; then
+                  if [ "$part" = "py$PYTHON" ] || [ "$part" = "$PLATFORM" ] || [ "$part" = "${PLATFORM}_py${PYTHON}" ]; then
+                    SHOULD_INCLUDE=true
+                    break
+                  fi
+                fi
+              done
+              
+              if [ "$SHOULD_INCLUDE" = "true" ]; then
+                if [ "$FILTERED_INCLUDES" != "[" ]; then
+                  FILTERED_INCLUDES="$FILTERED_INCLUDES,"
+                fi
+                FILTERED_INCLUDES="$FILTERED_INCLUDES$row"
+              fi
+            done
+            
+            FILTERED_INCLUDES="$FILTERED_INCLUDES]"
+            FILTER_JSON="{\"include\":$FILTERED_INCLUDES}"
+          fi
+          
+          echo "matrix=$FILTER_JSON" >> $GITHUB_OUTPUT
+
   build_wheels:
     name: Build for cp${{ matrix.python }}-${{ matrix.platform_id }}
+    needs: setup_matrix
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          # Window 64 bit
-          - os: windows-2019
-            python: 37
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-2019
-            python: 38
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-2019
-            python: 39
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-2019
-            python: 310
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-2019
-            python: 311
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-2019
-            python: 312
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-2019
-            python: 313
-            bitness: 64
-            platform_id: win_amd64
-
-          # Linux 64 bit Intel: x86_64
-          - os: ubuntu-latest
-            python: 37
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 38
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 39
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 310
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 311
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 312
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 313
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-
-          # Linux 64 bit ARM: aarch64 (on Circle CI)
-
-          # MacOS 64 bit Intel: arm64
-          - os: macos-14
-            bitness: 64
-            python: 37
-            platform_id: macosx_arm64
-          - os: macos-14
-            bitness: 64
-            python: 38
-            platform_id: macosx_arm64
-          - os: macos-14
-            bitness: 64
-            python: 39
-            platform_id: macosx_arm64
-          - os: macos-14
-            bitness: 64
-            python: 310
-            platform_id: macosx_arm64
-          - os: macos-14
-            bitness: 64
-            python: 311
-            platform_id: macosx_arm64
-          - os: macos-14
-            bitness: 64
-            python: 312
-            platform_id: macosx_arm64
-          - os: macos-14
-            bitness: 64
-            python: 313
-            platform_id: macosx_arm64
-
-          # MacOS 64 bit Intel: x86_64
-          - os: macos-13
-            bitness: 64
-            python: 37
-            platform_id: macosx_x86_64
-          - os: macos-13
-            bitness: 64
-            python: 38
-            platform_id: macosx_x86_64
-          - os: macos-13
-            bitness: 64
-            python: 39
-            platform_id: macosx_x86_64
-          - os: macos-13
-            bitness: 64
-            python: 310
-            platform_id: macosx_x86_64
-          - os: macos-13
-            bitness: 64
-            python: 311
-            platform_id: macosx_x86_64
-          - os: macos-13
-            bitness: 64
-            python: 312
-            platform_id: macosx_x86_64
-          - os: macos-13
-            bitness: 64
-            python: 313
-            platform_id: macosx_x86_64
-
-    if: >
-      github.event_name != 'workflow_dispatch' || 
-      github.event.inputs.build_matrix_filter == '' || 
-      contains(format(',{0},', github.event.inputs.build_matrix_filter), format(',py{0},', matrix.python)) || 
-      contains(format(',{0},', github.event.inputs.build_matrix_filter), format(',{0},', matrix.platform_id)) || 
-      contains(format(',{0},', github.event.inputs.build_matrix_filter), format(',{0}_py{1},', matrix.platform_id, matrix.python))
+      matrix: ${{ fromJson(needs.setup_matrix.outputs.matrix) }}
+    
     steps:
       - uses: actions/checkout@v4
 
