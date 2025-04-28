@@ -13,7 +13,7 @@ from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext as build_ext_orig
 
 # RDKix version to build (tag from github repository)
-rdkix_tag = "Release_2024_09_6"
+rdkix_tag = "Release_2025_03_1"
 
 # Get number of CPU cores for parallel builds
 cpu_count = multiprocessing.cpu_count()
