@@ -44,7 +44,7 @@ repair-wheel-command = [
     'auditwheel repair -w {dest_dir} {wheel}'
 ]
 
-environment-pass = ["CIBW_BUILD"]
+environment-pass = ["CIBW_BUILD", "CIBW_MANYLINUX_X86_64_IMAGE", "CIBW_MANYLINUX_I686_IMAGE"]
 
 [tool.cibuildwheel.macos]
 
