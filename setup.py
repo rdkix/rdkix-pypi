@@ -7,12 +7,16 @@ from shutil import copytree, rmtree
 from subprocess import call, check_call
 from sysconfig import get_paths
 from textwrap import dedent
+import multiprocessing
 
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext as build_ext_orig
 
 # RDKix version to build (tag from github repository)
 rdkix_tag = "Release_2023_09_5"
+
+# Get number of CPU cores for parallel builds
+cpu_count = multiprocessing.cpu_count()
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -80,6 +84,9 @@ class BuildRDKix(build_ext_orig):
         # boost:debug_level=1
 
         Path("conanfile.txt").write_text(dedent(conanfile))
+
+        print("---- Building Boost", file=sys.stderr)
+        print(f"Using cores: {cpu_count}", file=sys.stderr)
 
         # run conan install
         cmd = [
@@ -254,9 +261,11 @@ class BuildRDKix(build_ext_orig):
             # also export it to compile yaehmop for arm64
             vars["CMAKE_OSX_ARCHITECTURES"] = "arm64"
 
+        print("---- Building RDKix", file=sys.stderr)
+        print(f"Using cores: {cpu_count}", file=sys.stderr)
         cmds = [
             f"cmake -S . -B build {' '.join(options)} ",
-            "cmake --build build -j 4 --config Release -v",
+            f"cmake --build build -j {cpu_count} --config Release -v",
             "cmake --install build",
         ]
 
@@ -348,12 +357,13 @@ class BuildRDKix(build_ext_orig):
 setup(
     name="rdkix",
     version=rdkix_tag.replace("Release_", "").replace("_", "."),
-    description="A collection of chemoinformatics and machine-learning software written in C++ and Python",
-    author="Christopher Kuenneth",
-    author_email="chris@kuenneth.dev",
-    url="https://github.com/kuelumbus/rdkix",
+    description="An unofficial renamed fork of RDKit library for multiple RDKit versions in single environment.",
+    author="Jack Zhou",
+    author_email="jackzzs@outlook.com",
+    url="https://github.com/rdkix/rdkix-pypi",
     project_urls={
-        "RDKix": "http://rdkit.org/",
+        "RDKit": "http://rdkit.org/",
+        "RDKit on Github": "https://github.com/rdkit/rdkit",
         "RDKix on Github": "https://github.com/rdkix/rdkix",
     },
     license="BSD-3-Clause",

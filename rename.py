@@ -5,7 +5,10 @@ from typing import List
 def replace_names(dir_path: Path):
     for item in dir_path.iterdir():
         if item.is_dir():
-            replace_names(item)
+            if item.name == '.git':
+                continue
+            else:
+                replace_names(item)
 
         new_name = item.name.replace("rdkix", "rdkix")
         if new_name != item.name:
