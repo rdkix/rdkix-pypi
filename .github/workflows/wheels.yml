@@ -167,7 +167,7 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
             cd C:\\rdkix
           fi
-          python -m pip install cibuildwheel==2.16.2
+          python -m pip install cibuildwheel==2.22.0
           python -m cibuildwheel --output-dir wheelhouse
         shell: bash
 
