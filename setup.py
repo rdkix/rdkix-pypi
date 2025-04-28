@@ -7,12 +7,16 @@ from shutil import copytree, rmtree, ignore_patterns
 from subprocess import call, check_call
 import sysconfig
 from textwrap import dedent
+import multiprocessing
 
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext as build_ext_orig
 
 # RDKix version to build (tag from github repository)
 rdkix_tag = "Release_2024_03_6"
+
+# Get number of CPU cores for parallel builds
+cpu_count = multiprocessing.cpu_count()
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -95,6 +99,9 @@ freetype/2.13.2
         # boost:debug_level=1
 
         Path("conanfile.txt").write_text(dedent(conanfile))
+
+        print("---- Building Boost", file=sys.stderr)
+        print(f"Using cores: {cpu_count}", file=sys.stderr)
 
         # run conan install
         cmd = [
@@ -294,17 +301,19 @@ freetype/2.13.2
                 f"-DCMAKE_OSX_DEPLOYMENT_TARGET={os.environ.get('MACOSX_DEPLOYMENT_TARGET', '11.0')}",
             ]
 
+        print("---- Building RDKix", file=sys.stderr)
+        print(f"Using cores: {cpu_count}", file=sys.stderr)
         if "linux" in sys.platform:
             # Use ninja for linux builds
             cmds = [
                 f"cmake -S . -B build -G Ninja --debug-find-pkg=Python3 {' '.join(options)} ",
-                "cmake --build build --config Release",
+                f"cmake --build build --config Release -j {cpu_count}",
                 "cmake --install build",
             ]
         elif sys.platform == "win32":
             cmds = [
                 f"cmake -S . -B build --debug-find-pkg=Python3 {' '.join(options)} ",
-                "cmake --build build --config Release -v",
+                f"cmake --build build --config Release -v -j {cpu_count}",
                 "cmake --install build",
             ]
         else:
@@ -392,7 +401,7 @@ freetype/2.13.2
 
         # Build the RDKix stubs
         cmds += [
-            f"cmake --build build --config Release --target stubs -v",
+            f"cmake --build build --config Release --target stubs -v -j {cpu_count}",
         ]
 
         # rdkix-stubs require the site-package path to be in sys.path / PYTHONPATH
@@ -484,12 +493,13 @@ freetype/2.13.2
 setup(
     name="rdkix",
     version=rdkix_tag.replace("Release_", "").replace("_", "."),
-    description="A collection of chemoinformatics and machine-learning software written in C++ and Python",
-    author="Christopher Kuenneth",
-    author_email="chris@kuenneth.dev",
-    url="https://github.com/kuelumbus/rdkix",
+    description="An unofficial renamed fork of RDKit library for multiple RDKit versions in single environment.",
+    author="Jack Zhou",
+    author_email="jackzzs@outlook.com",
+    url="https://github.com/rdkix/rdkix-pypi",
     project_urls={
-        "RDKix": "http://rdkit.org/",
+        "RDKit": "http://rdkit.org/",
+        "RDKit on Github": "https://github.com/rdkit/rdkit",
         "RDKix on Github": "https://github.com/rdkix/rdkix",
     },
     license="BSD-3-Clause",
