@@ -12,18 +12,21 @@ build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
 
-build-verbosity = "1"
-
+build-verbosity = 1
+# build-frontend = { name = "build[uv]"}
 # test
 test-requires = "pytest"
 test-command = "pytest --exitfirst --verbose --failed-first {package}/tests"
-
+# test-skip = "*-win_amd64"
 
 [tool.cibuildwheel.linux]
 before-all = [
-    # Has eigen3-devel.aarch64
+    "sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/CentOS-*.repo",
+    "sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/CentOS-*.repo",
+    "sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/CentOS-*.repo",
+    "yum update -y",
     "yum install -y epel-release",
-    "yum install -y wget freetype-devel libpng12-devel pixman-devel zlib-devel eigen3-devel",
+    "yum install -y freetype-devel libpng-devel pixman-devel zlib-devel wget",
     # cairo-devel from the centos repo does not work, build here
     "wget https://www.cairographics.org/snapshots/cairo-1.15.14.tar.xz --no-check-certificate",
     "tar xvf cairo-*",
@@ -40,7 +43,7 @@ repair-wheel-command = [
     'auditwheel repair -w {dest_dir} {wheel}'
 ]
 
-environment-pass = ["CIBW_BUILD"]
+environment-pass = ["CIBW_BUILD", "CIBW_MANYLINUX_X86_64_IMAGE", "CIBW_MANYLINUX_I686_IMAGE"]
 
 [tool.cibuildwheel.macos]
 
