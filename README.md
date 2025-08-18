@@ -3,7 +3,7 @@
 This is an unofficial fork of [the RDKit pypi package](https://pypi.org/project/rdkit/), renamed to RDKix for enabling multiple rdkit versions to coexist in the same python environment. [RDKit](https://github.com/rdkit/rdkit) is a collection of cheminformatics and machine-learning software written in C++ and Python. The renamed package, RDKix, can easily be installed using:
 
 ```sh
-pip install rdkit-mux
+pip install rdkix
 ```
 
 And imported using:
